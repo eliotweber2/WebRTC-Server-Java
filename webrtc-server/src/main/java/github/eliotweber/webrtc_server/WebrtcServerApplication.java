@@ -58,8 +58,8 @@ public class WebrtcServerApplication {
   private Map <String, ConnectionManager> connections = new HashMap<>();  
 
 
-	public static void main(String[] args) {
-		SpringApplication.run(WebrtcServerApplication.class, args);
+	public static void runServer() {
+		SpringApplication.run(WebrtcServerApplication.class);
 	}
 
   private WebrtcConnectionHandler getHandlerByName(String name) {

@@ -30,7 +30,8 @@ public class ConnectionManager {
     private RTCDataChannel signalingChannel;
     public RTCDataChannel dataChannel;
 
-    //private boolean isClosing;
+    Timer closingTimer;
+    private static final int CLOSING_TIMER_LENGTH = 1000;
 
     private static final RTCDataChannelInit signalingChannelConfig = new RTCDataChannelInit();
     static {
@@ -78,6 +79,23 @@ public class ConnectionManager {
         });
 
         dataChannel = this.connection.createDataChannel("data", dataChannelConfig);
+
+        dataChannel.registerObserver(new RTCDataChannelObserver() {
+            @Override 
+            public void onStateChange() {}
+
+            @Override
+            public void onBufferedAmountChange(long previousAmount) {}
+
+            @Override
+            public void onMessage(RTCDataChannelBuffer buffer) {
+                ByteBuffer data = buffer.data;
+                byte[] bytes = new byte[data.remaining()];
+                data.get(bytes);
+                String message = new String(bytes, StandardCharsets.UTF_8);
+                handler.onDataMessage(message);
+            }
+        });
     }
 
     private void onSignalMessage(String message) {
@@ -89,7 +107,7 @@ public class ConnectionManager {
 
         switch (flags[0]) {
             case "MESSAGE":
-                handler.onSignalMessage(payload);
+                handler.onSignalMessage(Arrays.copyOfRange(flags, 1, flags.length), payload);
                 break;
 
             case "RECONNECT":
@@ -107,9 +125,15 @@ public class ConnectionManager {
 
             case "CLOSE":
                 handler.onClose();
-                //isClosing = true;
-                this.sendSignaling("", new String[] {"CLOSE"}, true);
+                this.sendSignaling("", new String[] {"CONFIRM_CLOSE"}, true);
                 break;
+
+            case "CONFIRM_CLOSE":
+                if (this.closingTimer == null) this.closingTimer.cancel();
+                this.connection.close();
+                break;
+
+            case 
         }
     }
 
@@ -173,13 +197,25 @@ public class ConnectionManager {
             }
         });
     }
+
+    public void closeConnection() {
+        this.closingTimer = new Timer();
+        CloseBackup isClosing = new CloseBackup();
+        isClosing.setConnection(this.connection);
+        this.closingTimer.schedule(isClosing, CLOSING_TIMER_LENGTH);
+    }
 }
 
-class closeBackup extends TimerTask {
+class CloseBackup extends TimerTask {
     RTCPeerConnection connection;
 
+    @Override
     public void run() {
         System.out.println("Client did not confirm close. Closing anyway.");
         connection.close();
+    }
+
+    public void setConnection(RTCPeerConnection connection) {
+        this.connection = connection;
     }
 }

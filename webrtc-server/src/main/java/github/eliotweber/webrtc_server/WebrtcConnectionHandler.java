@@ -15,7 +15,7 @@ public interface WebrtcConnectionHandler {
 
     void onError(String message);
 
-    void onSignalMessage(String message);
+    void onSignalMessage(String[] flags, String payload);
     void onDataMessage(String message);
 
     void onReconnect();
