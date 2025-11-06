@@ -1,7 +1,7 @@
 package github.eliotweber.webrtc_server;
 
-public class DefaultHandler implements WebrtcConnectionHandler {
-
+public class DefaultHandler extends WebrtcConnectionHandler {
+    
     public void onOpen() {
         System.out.println("Connection opened");
     }
@@ -13,8 +13,8 @@ public class DefaultHandler implements WebrtcConnectionHandler {
         System.err.println("Error: " + message);
     }
 
-    public void onSignalMessage(String message) {
-        System.out.println("Signal message: " + message);
+    public void onSignalMessage(String[] flags, String payload) {
+        System.out.println("Signal message: " + payload + " with flags: " + String.join(", ", flags));
     }
     public void onDataMessage(String message) {
         System.out.println("Data message: " + message);

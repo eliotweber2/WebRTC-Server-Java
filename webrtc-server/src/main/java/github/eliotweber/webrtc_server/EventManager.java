@@ -3,18 +3,14 @@ package github.eliotweber.webrtc_server;
 import java.util.*;
 
 public class EventManager {
-    private Map<String, List<EventObserver>> listeners;
+    private EventTreeNode rootNode;
     private List<String> eventTypes = new ArrayList<>(Arrays.asList(
 
     ));
 
     public String addEventListener(EventObserver observer) {
         for (String type : observer.setEventTypes()) {
-            if (!eventTypes.contains(type)) {
-                throw new IllegalArgumentException("Invalid event type: " + type);
-            }
-
-            listeners.get(type).add(observer);
+            
         }
 
         return UUID.randomUUID().toString();
@@ -41,5 +37,42 @@ public class EventManager {
                 if (observer.testEvent(event)) observer.onEvent(event);
             }
         }
+    }
+}
+
+class EventTreeNode {
+    public String name;
+    private List<EventObserver> observers = new ArrayList<>();
+    private Map<String, EventTreeNode> children = new HashMap<>();
+
+    public EventTreeNode(String name) {
+        this.name = name;
+    }
+
+    public void addEmitter(EventObserver observer, List<String> path) {
+        if (path.size() == 0) {
+            this.observers.add(observer);
+            return;
+        }
+
+        String childName = path.get(0);
+        EventTreeNode child = children.get(childName);
+
+        if (child == null) {
+            child = new EventTreeNode(childName);
+            children.put(childName, child);
+        }
+
+        child.addEmitter(observer, path.subList(1, path.size()));
+    }
+
+    public List<EventObserver> getAllListeners() {
+        List<EventObserver> allObservers = new ArrayList<EventObserver>(this.observers);
+
+        for (EventTreeNode child : children.values()) {
+            allObservers.addAll(child.getAllListeners());
+        }
+
+        return allObservers;
     }
 }

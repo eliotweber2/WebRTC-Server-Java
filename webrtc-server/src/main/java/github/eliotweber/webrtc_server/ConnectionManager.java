@@ -47,6 +47,7 @@ public class ConnectionManager {
     public ConnectionManager(String id, PeerConnectionFactory factory, RTCConfiguration config, WebrtcConnectionHandler handler) {
         this.id = id;
         this.handler = handler;
+        this.handler.connectionManager = this;
         this.setupConnection(factory, config);
     }
 
@@ -112,14 +113,10 @@ public class ConnectionManager {
 
             case "RECONNECT":
                 handler.onReconnect();
-                handler.onSetup();
                 break;
 
             case "OPEN":
-                handler.onOpen();
-                if (this.handler.getPassReconnect()) {
-                    this.sendSignaling("", new String[] {this.handler.getShouldReconnect()? "SHOULD_RECONNECT" : "NO_RECONNECT"}, true);
-                }
+                this.sendSignaling("", new String[] {this.handler.reconnect? "SHOULD_RECONNECT" : "NO_RECONNECT"}, true);
                 this.sendSignaling("", new String[] {"OPEN"}, true);
                 break;
 
@@ -133,7 +130,11 @@ public class ConnectionManager {
                 this.connection.close();
                 break;
 
-            case 
+            case "SERVER_CONNECT":
+                break;
+
+            default:
+                throw new RuntimeException("Unknown signaling message flag: " + flags[0]);
         }
     }
 
@@ -155,6 +156,18 @@ public class ConnectionManager {
 
         try {
             signalingChannel.send(textChannelBuffer);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendData(String message) {
+        ByteBuffer textBuffer = ByteBuffer.wrap(message.toString().getBytes(StandardCharsets.UTF_8));
+        RTCDataChannelBuffer textChannelBuffer = new RTCDataChannelBuffer(textBuffer, false);
+
+        try {
+            dataChannel.send(textChannelBuffer);
         }
         catch (Exception e) {
             e.printStackTrace();

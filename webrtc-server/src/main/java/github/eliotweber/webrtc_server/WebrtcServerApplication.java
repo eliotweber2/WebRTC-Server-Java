@@ -56,11 +56,16 @@ public class WebrtcServerApplication {
   }
 
   private Map <String, ConnectionManager> connections = new HashMap<>();  
+  private ServerManager serverManager;
 
 
 	public static void runServer() {
 		SpringApplication.run(WebrtcServerApplication.class);
 	}
+
+  public WebrtcServerApplication() {
+    this.serverManager = new ServerManager();
+  }
 
   private WebrtcConnectionHandler getHandlerByName(String name) {
     switch (name) {
@@ -169,12 +174,12 @@ public class WebrtcServerApplication {
       RTCIceCandidate candidate = (RTCIceCandidate) body.get("candidate");
       handler.iceCandidates.add(candidate);
   }
-}
 
-/*
-class OfferReturnObject {
-    public String sdp;
-    public String type;
-    public String id;
+  @GetMapping("/" + prefix + "/servers")
+  @SuppressWarnings("unchecked")
+  public JSONObject getServers() {
+      JSONObject response = new JSONObject();
+      response.put("servers", this.serverManager.getServers());
+      return response;
+  }
 }
-*/

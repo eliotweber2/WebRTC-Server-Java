@@ -1,23 +1,27 @@
 package github.eliotweber.webrtc_server;
 
-public interface WebrtcConnectionHandler {
+public abstract class WebrtcConnectionHandler {
 
-    default boolean getPassReconnect() {
-        return true;
+    public boolean reconnect = true;
+    public ConnectionManager connectionManager;
+
+    public abstract void onClose();
+
+    public abstract void onError(String message);
+
+    public abstract void onSignalMessage(String[] flags, String payload);
+    public abstract void onDataMessage(String message);
+
+    @SuppressWarnings("unused")
+    private void sendSignaling(String message, String[] flags) {
+        this.connectionManager.sendSignaling(message, flags, false);
     }
 
-    default boolean getShouldReconnect() {
-        return true;
+    @SuppressWarnings("unused")
+    private void sendData(String message) {
+        this.connectionManager.sendData(message);
     }
 
-    void onOpen();
-    void onClose();
-
-    void onError(String message);
-
-    void onSignalMessage(String[] flags, String payload);
-    void onDataMessage(String message);
-
-    void onReconnect();
-    void onSetup();
+    public abstract void onReconnect();
+    public abstract void onSetup();
 }
