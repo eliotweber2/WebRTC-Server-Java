@@ -1,11 +1,10 @@
 package github.eliotweber.webrtc_server;
 
-import java.sql.Timestamp;
-import java.util.List;
 import java.util.Map;
+import java.time.Instant;
 
-public record Event(
-    Timestamp time,
-    List<String> types,
-    Map<String, Object> data
+public record Event (
+    EventType type,
+    Map<String, Object> data,
+    Instant time
 ) { }

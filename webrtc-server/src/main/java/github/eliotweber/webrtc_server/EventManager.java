@@ -4,52 +4,57 @@ import java.util.*;
 
 public class EventManager {
     private EventTreeNode rootNode;
-    private List<String> eventTypes = new ArrayList<>(Arrays.asList(
 
-    ));
+    private Map<String, EventLevel> levels;
 
     public String addEventListener(EventObserver observer) {
-        for (String type : observer.setEventTypes()) {
-            
+        for (EventType type : observer.eventTypes) {
+            EventLevel level = new EventLevel(observer.level, type);
+            List<String> path = Arrays.asList(level.getArray());
+            rootNode.addListener(observer, path);
         }
 
-        return UUID.randomUUID().toString();
-    }
+        observer._id = UUID.randomUUID().toString();
 
-    public void registerEventType(String type) {
-        if (eventTypes.contains(type)) {
-            throw new IllegalArgumentException("Type already registered: " + type);
-        }
-
-        eventTypes.add(type);
-        listeners.put(type, new ArrayList<>());
+        return observer._id;
     }
 
     public void removeEventListener(String observerId) {
-        for (String type : eventTypes) {
-            listeners.get(type).removeIf(observer -> observer._id.equals(observerId));
-        }
+        rootNode.removeEventListener(observerId);
     }
 
-    public void dispatchEvent(Event event) {
-        for (String type : event.types()) {
-            for (EventObserver observer : listeners.get(type)) {
-                if (observer.testEvent(event)) observer.onEvent(event);
-            }
+    public void _dispatchEvent(Event event, EventLevel level) {
+        
+        List<EventObserver> observers = rootNode.gotoChild(Arrays.asList(level.getArray())).observers;
+
+        for (EventObserver observer : observers) {
+            if (observer.testEvent(event)) observer.onEvent(event);
         }
+        
+    }
+
+    public void addLevel(String name, EventLevel level) {
+        levels.put(name, level);
+    }
+
+    public EventLevel getLevel(String name) {
+        if (!levels.containsKey(name)) {
+            throw new RuntimeException("Level not found: " + name);
+        }
+        return levels.get(name);
     }
 }
 
 class EventTreeNode {
     public String name;
-    private List<EventObserver> observers = new ArrayList<>();
-    private Map<String, EventTreeNode> children = new HashMap<>();
+    public final List<EventObserver> observers = new ArrayList<>();
+    private final Map<String, EventTreeNode> children = new HashMap<>();
 
     public EventTreeNode(String name) {
         this.name = name;
     }
 
-    public void addEmitter(EventObserver observer, List<String> path) {
+    public void addListener(EventObserver observer, List<String> path) {
         if (path.size() == 0) {
             this.observers.add(observer);
             return;
@@ -63,7 +68,15 @@ class EventTreeNode {
             children.put(childName, child);
         }
 
-        child.addEmitter(observer, path.subList(1, path.size()));
+        child.addListener(observer, path.subList(1, path.size()));
+    }
+
+    public void removeEventListener(String observerId) {
+        this.observers.removeIf(observer -> observer._id.equals(observerId));
+
+        for (EventTreeNode child : children.values()) {
+            child.removeEventListener(observerId);
+        }
     }
 
     public List<EventObserver> getAllListeners() {
@@ -74,5 +87,20 @@ class EventTreeNode {
         }
 
         return allObservers;
+    }
+
+    public EventTreeNode gotoChild(List<String> path) {
+        if (path.size() == 0) {
+            return this;
+        }
+
+        String childName = path.get(0);
+        EventTreeNode child = children.get(childName);
+
+        if (child == null) {
+            return null;
+        }
+
+        return child.gotoChild(path.subList(1, path.size()));
     }
 }

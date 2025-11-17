@@ -1,9 +1,15 @@
 package github.eliotweber.webrtc_server;
 
+import java.util.UUID;
+
 public abstract class WebrtcConnectionHandler {
 
     public boolean reconnect = true;
     public ConnectionManager connectionManager;
+    public EventManager eventManager;
+
+    public final String id = UUID.randomUUID().toString();
+    public final EventLevel level = new EventLevel("connection", id, null);
 
     public abstract void onClose();
 

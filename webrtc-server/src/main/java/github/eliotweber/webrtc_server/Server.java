@@ -3,14 +3,16 @@ package github.eliotweber.webrtc_server;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.Timer;
 
 public abstract class Server extends Thread {
-    String id;
     EventManager eventManager;
     Map<String, WebrtcConnectionHandler> connections = new HashMap<>();
     Timer heartbeatTimer;
 
+    public final String id = UUID.randomUUID().toString();
+    public final EventLevel level = new EventLevel("server", id, null);
 
     public abstract void setup();
 

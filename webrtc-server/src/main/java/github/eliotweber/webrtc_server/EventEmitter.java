@@ -1,15 +1,19 @@
 package github.eliotweber.webrtc_server;
 
+import java.time.Instant;
+import java.util.Map;
+
 public class EventEmitter {
     private final EventManager eventManager;
-    public final EventEmitterLevelObject level;
+    public final EventLevel level;
 
-    public EventEmitter(EventManager eventManager, String type, String id) {
+    public EventEmitter(EventManager eventManager, EventLevel level) {
         this.eventManager = eventManager;
-        this.level = new EventEmitterLevelObject(type, id);
+        this.level = level;
     }
 
-    public void emit(String eventName, Object data) {
-        this.eventManager.dispatchEvent(event);
+    public void emit(EventType eventType, Map<String, Object> data) {
+        Event event = new Event(eventType, data, Instant.now());
+        eventManager._dispatchEvent(event, this.level);
     }
 }

@@ -36,6 +36,11 @@ public class WebrtcServerApplication {
 
   private static final String prefix = "webrtc";
 
+  public final String id = UUID.randomUUID().toString();
+  public final EventLevel level = new EventLevel("api", id, null);
+
+  public final EventManager eventManager;
+
   private static RTCConfiguration config = new RTCConfiguration();
 
   public static final RTCOfferOptions options = new RTCOfferOptions();
@@ -65,6 +70,11 @@ public class WebrtcServerApplication {
 
   public WebrtcServerApplication() {
     this.serverManager = new ServerManager();
+
+    this.eventManager = this.serverManager.eventManager;
+    this.eventManager.addLevel("api", this.level);
+    
+    this.serverManager.start();
   }
 
   private WebrtcConnectionHandler getHandlerByName(String name) {
